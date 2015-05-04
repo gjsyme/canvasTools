@@ -56,17 +56,17 @@ var drawChildren = function(target){
     console.log(key+": ");
     console.log(depthNodes[key]);
     if(key==0){
-      drawBox(target, (c.width-defaultBox.width)/2, 0);
+      drawDetailedBox(target, (c.width-defaultBox.width)/2, 0, depthNodes[key][0].title);
     } else {
       for(var i=0; i<depthNodes[key].length; i++){
         //do stuff
-        drawBox(target, childOffset.x*i, childOffset.y*key);
+        drawDetailedBox(target, childOffset.x*i, childOffset.y*key, depthNodes[key][i].title);
       }
     }
   }
 }
 
-//given a canvas and a object, work your way down (depth first traversal)
+//given a canvas and a object, work your way down (depth first traversal?)
 //makes calls all the way down, now just have to figure out how to make it do something in the process
 var mapChildren = function(target, nodeName){
   console.log(nodeName);
@@ -118,6 +118,11 @@ var findDepthWorker = function(currentNode, target, n){
   }
 }
 
+//convenience method
+var drawDetailedBox = function(target, x, y, title){
+  drawBox(target, x, y);
+  drawTitle(target, x, y, title);
+}
 //draw a box at a location
 var drawBox = function(target, x, y){
   var c = document.getElementById(target);

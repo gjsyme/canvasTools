@@ -5,6 +5,8 @@ Right now this is minimal function, scale, etc. Right now you can 'host' by open
 
 #Todo
 - Visualize the testdata as it descends the 'tree'
+  - Right now gets root->one->['a', 'x'] where it should be ['a', 'b', 'c'] for depth=2 under 'one'.
+  - Also does not register (or at least show) 'two' and its children
 - Scale the image in a meaningful way to the number of nodes in the tree
   - definitely will require vertical scale
   - maybe horizontal
