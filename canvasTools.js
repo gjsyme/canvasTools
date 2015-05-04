@@ -39,10 +39,11 @@ var testMap = arrayToMap(testData);
 
 //draw a data object to the canvas (target)
 var drawData = function(target, data){
-  var c = document.getElementById(target);
-  var ctx = c.getContext('2d');
+  drawLabel(target, "Demo Label");
+  // var c = document.getElementById(target);
+  // var ctx = c.getContext('2d');
   //start at root (assumed to be present)
-  drawBox(target, (c.width-defaultBox.width)/2, 0);
+  //drawBox(target, (c.width-defaultBox.width)/2, 0);
   //do children of root
   mapChildren(target, 'root');
   console.log(depthNodes);
@@ -52,6 +53,7 @@ var drawData = function(target, data){
 
 var drawChildren = function(target){
   var c = document.getElementById(target);
+  var ctx = c.getContext();
   for(var key in depthNodes){
     console.log(key+": ");
     console.log(depthNodes[key]);
@@ -64,6 +66,7 @@ var drawChildren = function(target){
       }
     }
   }
+  //maybe do something to resize the canvas if appropriate here
 }
 
 //given a canvas and a object, work your way down (depth first traversal?)
@@ -72,7 +75,7 @@ var mapChildren = function(target, nodeName){
   console.log(nodeName);
   var node = testMap[nodeName];
   var depth = findDepth(nodeName);
-  console.log('on node '+nodeName+' in mapChildren at depth: '+depth);
+  console.log('on node '+nodeName+' in mapChildren');
   //console.log(node.children);
   node.children.forEach(function(entry){
     console.log("calling mapChildren on "+entry);
@@ -82,16 +85,14 @@ var mapChildren = function(target, nodeName){
 
 //a way to find the depth of a given node
 var findDepth = function(target){
-  console.log('initial findDepth for: '+target);
+  // console.log('initial findDepth for: '+target);
   return findDepthWorker('root', target, 0);
 }
 var findDepthWorker = function(currentNode, target, n){
   if(!n){
     n=0
-  }else{
-    n=parseInt(n);
   }
-  console.log('secondary findDepth on: '+currentNode+" looking for "+target);
+  // console.log('secondary findDepth on: '+currentNode+" looking for "+target);
   var node = testMap[currentNode];
   if(node.title == target){
     //add to the depthNodes object
@@ -105,7 +106,7 @@ var findDepthWorker = function(currentNode, target, n){
   if(node.children.length > 0){
     //console.log(node.children);
   } else {
-    console.log('no further children');
+    // console.log('no further children');
     return -2;
   }
   if(node.children.indexOf(target)>0){
@@ -130,7 +131,6 @@ var drawBox = function(target, x, y){
   ctx.fillStyle="#dddddd";
   ctx.fillRect(x,y,defaultBox.width,defaultBox.height);
 }
-
 //draw text at a location
 var drawText = function(target, x, y){
   var c = document.getElementById(target);
@@ -139,14 +139,14 @@ var drawText = function(target, x, y){
   ctx.fillStyle="#000000";
   ctx.fillText("Hello canvas", 10, 50);
 }
-
-var drawLabel = function(target){
+//draw a label in top left corner
+var drawLabel = function(target, labelText){
   var c = document.getElementById(target);
   var ctx = c.getContext('2d');
-  ctx.font = "30px Arial";
+  var fontsize = 30;
+  ctx.font = fontsize.toString()+"px Arial";
   ctx.fillStyle="#ff0000";
-  ctx.textAlign="center";
-  ctx.fillText("Label", c.width/2, c.height/2);
+  ctx.fillText(labelText, 10, fontsize);
 }
 
 //draw an appropriately positioned title for the object-box located at x,y
