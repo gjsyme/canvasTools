@@ -2,11 +2,19 @@ var defaultBox = {
   width: 200,
   height: 100
 };
-
 var offsets = {
   x: 100,
   y: 100
-}
+};
+var rootBox = {
+  x:200,
+  y:0
+};
+var childOffset = {
+  x:300,
+  y: 150
+};
+var depthNodes = {};
 
 //testdata in a really roundabout way because my brain prefers it.
 var testData = [
@@ -37,17 +45,77 @@ var drawData = function(target, data){
   drawBox(target, (c.width-defaultBox.width)/2, 0);
   //do children of root
   mapChildren(target, 'root');
+  console.log(depthNodes);
+  //draw the nodes in depthNodes
+  drawChildren(target);
+}
+
+var drawChildren = function(target){
+  var c = document.getElementById(target);
+  for(var key in depthNodes){
+    console.log(key+": ");
+    console.log(depthNodes[key]);
+    if(key==0){
+      drawBox(target, (c.width-defaultBox.width)/2, 0);
+    } else {
+      for(var i=0; i<depthNodes[key].length; i++){
+        //do stuff
+        drawBox(target, childOffset.x*i, childOffset.y*key);
+      }
+    }
+  }
 }
 
 //given a canvas and a object, work your way down (depth first traversal)
 //makes calls all the way down, now just have to figure out how to make it do something in the process
 var mapChildren = function(target, nodeName){
+  console.log(nodeName);
   var node = testMap[nodeName];
-  console.log(node.children);
+  var depth = findDepth(nodeName);
+  console.log('on node '+nodeName+' in mapChildren at depth: '+depth);
+  //console.log(node.children);
   node.children.forEach(function(entry){
     console.log("calling mapChildren on "+entry);
     mapChildren(target, entry);
   });
+}
+
+//a way to find the depth of a given node
+var findDepth = function(target){
+  console.log('initial findDepth for: '+target);
+  return findDepthWorker('root', target, 0);
+}
+var findDepthWorker = function(currentNode, target, n){
+  if(!n){
+    n=0
+  }else{
+    n=parseInt(n);
+  }
+  console.log('secondary findDepth on: '+currentNode+" looking for "+target);
+  var node = testMap[currentNode];
+  if(node.title == target){
+    //add to the depthNodes object
+    if(depthNodes[n]){
+      depthNodes[n].push(node);
+    }else{
+      depthNodes[n]=[node];
+    }
+    return n;
+  }
+  if(node.children.length > 0){
+    //console.log(node.children);
+  } else {
+    console.log('no further children');
+    return -2;
+  }
+  if(node.children.indexOf(target)>0){
+    return n
+  } else{
+    node.children.forEach(function(entry){
+      return findDepthWorker(entry, target, n+1);
+    });
+    return;
+  }
 }
 
 //draw a box at a location
