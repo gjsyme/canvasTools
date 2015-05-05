@@ -95,7 +95,7 @@ var intelliDraw = function(target, depthArray, depth){
   for(var i=0; i<depthArray.length; i++){
     yPost = childOffset.y*depth;
     xPost = xoffset*(i+1);
-    drawDetailedBox(target, xPost, yPost, depth);
+    drawDetailedBox(target, xPost, yPost, depthArray[i].title);
   }
 }
 
@@ -177,7 +177,6 @@ var cornerBox=function(target, x, y){
   x = x + defaultBox.width - 30;
   var c = document.getElementById(target);
   var ctx = c.getContext('2d');
-  //ctx.fillStyle="#dcdcdc";
   ctx.fillStyle="#cccccc";
   ctx.fillRect(x,y,30,20);
 }
