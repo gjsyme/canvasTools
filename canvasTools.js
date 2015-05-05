@@ -15,18 +15,23 @@ var childOffset = {
   y: 150
 };
 var depthNodes = {};
+var depthMap = {};
+
+//testdata is a format that exists in my application that i would like this for. A full object is listed below.
+//data is stored in a MongoDB with the following information (currenlty input is by tree strucutre - you have to define a parent to create children)
+//as such, relationships are driven by the child (as the parent upon creation has no concept of its children)
 
 //testdata in a really roundabout way because my brain prefers it.
 var testData = [
-  {title: 'root', description: 'the root node', parent: '', children: ['one', 'two']},
-  {title: "one", description: "this is the root thing", parent: 'root', children: ['a', 'b', 'c']},
-  {title: 'two', description: 'this is the other thing', parent: 'root', children: ['x', 'y', 'z']},
-  {title: 'a', description: 'this is a', parent: 'one', children: []},
-  {title: 'b', description: 'this is b', parent: 'one', children: []},
-  {title: 'c', description: 'this is c', parent: 'one', children: []},
-  {title: 'x', description: 'this is x', parent: 'two', children: []},
-  {title: 'y', description: 'this is y', parent: 'two', children: []},
-  {title: 'z', description: 'this is z', parent: 'two', children: []}
+  {title: 'root', description: 'the root node', parent: ''},
+  {title: "one", description: "this is the one thing", parent: 'root'},
+  {title: 'two', description: 'this is the other thing', parent: 'root'},
+  {title: 'a', description: 'this is a', parent: 'one'},
+  {title: 'b', description: 'this is b', parent: 'one'},
+  {title: 'c', description: 'this is c', parent: 'one'},
+  {title: 'x', description: 'this is x', parent: 'two'},
+  {title: 'y', description: 'this is y', parent: 'two'},
+  {title: 'z', description: 'this is z', parent: 'two'}
 ];
 var arrayToMap = function(array){
   var ret = {};
@@ -37,87 +42,103 @@ var arrayToMap = function(array){
 }
 var testMap = arrayToMap(testData);
 
+//full sample object out of MongoDB
+//{ "_id" : "mMY3vZ6kc6K786shT", "name" : "IdeaLab", "target" : "/content", "parent" : "home", "category" : "idealab", "user" : "Wzh6JMb7LcppDtwBN", "title" : "IdeaLab", "body" : "Use our 3d printer, 3d scanner, software development studio, and other exciting technical resources!" }
+
+var drawData = function(target){
+  //target is the canvas id on the page
+  drawDataSet(target, testMap);
+}
+
 //draw a data object to the canvas (target)
-var drawData = function(target, data){
+var drawDataSet = function(target, data){
   drawLabel(target, "Demo Label");
-  // var c = document.getElementById(target);
-  // var ctx = c.getContext('2d');
-  //start at root (assumed to be present)
-  //drawBox(target, (c.width-defaultBox.width)/2, 0);
-  //do children of root
-  mapChildren(target, 'root');
-  console.log(depthNodes);
-  //draw the nodes in depthNodes
-  drawChildren(target);
+  //create a children field for each item in the map based on the parent field
+  data = populateChildren(data);
+  updateCanvasParameters(target);
+  drawTree(target, data);
 }
 
-var drawChildren = function(target){
+var updateCanvasParameters = function(target){
   var c = document.getElementById(target);
-  var ctx = c.getContext();
-  for(var key in depthNodes){
-    console.log(key+": ");
-    console.log(depthNodes[key]);
-    if(key==0){
-      drawDetailedBox(target, (c.width-defaultBox.width)/2, 0, depthNodes[key][0].title);
-    } else {
-      for(var i=0; i<depthNodes[key].length; i++){
-        //do stuff
-        drawDetailedBox(target, childOffset.x*i, childOffset.y*key, depthNodes[key][i].title);
-      }
-    }
+  var ctx = c.getContext('2d');
+
+  var totalDepth = Object.keys(depthMap).length;
+  var totalWidth=0;
+  for(var key in depthMap){
+    console.log(depthMap[key].length);
+    if(depthMap[key].length > totalWidth){totalWidth = depthMap[key].length;}
   }
-  //maybe do something to resize the canvas if appropriate here
+
+  var minHeight = childOffset.y*totalDepth + 100;
+  var minWidth = childOffset.x*totalWidth + 100;
+  //console.log('height: '+c.height+" minimum: "+minHeight);
+  //console.log('width: '+c.width+" minimum: "+minWidth);
+  c.height = c.height < minHeight ? minHeight : c.height;
+  c.width = c.width < minWidth ? minWidth : c.width;
 }
 
-//given a canvas and a object, work your way down (depth first traversal?)
-//makes calls all the way down, now just have to figure out how to make it do something in the process
-var mapChildren = function(target, nodeName){
-  console.log(nodeName);
-  var node = testMap[nodeName];
-  var depth = findDepth(nodeName);
-  console.log('on node '+nodeName+' in mapChildren');
-  //console.log(node.children);
-  node.children.forEach(function(entry){
-    console.log("calling mapChildren on "+entry);
-    mapChildren(target, entry);
-  });
+var drawTree = function(target, data){
+  for(var key in depthMap){
+    var depthArray = depthMap[key];
+    intelliDraw(target, depthArray, key);
+    //for(var i=0; i<depthArray.length; i++){
+      //print the nodes here, go dumb for now
+      //console.log('draw');
+      //console.log(depthArray[i]);
+      //yPost = childOffset.y*key;
+      //xPost = 50+childOffset.x*i;
+      //drawDetailedBox(target, xPost, yPost, depthArray[i].title);
+    //}
+  }
 }
 
-//a way to find the depth of a given node
-var findDepth = function(target){
-  // console.log('initial findDepth for: '+target);
-  return findDepthWorker('root', target, 0);
-}
-var findDepthWorker = function(currentNode, target, n){
-  if(!n){
-    n=0
+var intelliDraw = function(target, depthArray, depth){
+  var c = document.getElementById(target);
+  //try to center align by division
+  var xoffset = c.width / (depthArray.length+1);
+  console.log(xoffset);
+  for(var i=0; i<depthArray.length; i++){
+    yPost = childOffset.y*depth;
+    xPost = xoffset*(i+1);
+    drawDetailedBox(target, xPost, yPost, depth);
   }
-  // console.log('secondary findDepth on: '+currentNode+" looking for "+target);
-  var node = testMap[currentNode];
-  if(node.title == target){
-    //add to the depthNodes object
-    if(depthNodes[n]){
-      depthNodes[n].push(node);
+}
+
+var populateChildren = function(data){
+  //go to each node, find depth of that node
+  //populate the depthMap with depth: [node1, node2, node...] for tracking purposes
+  //experimentally, also adding the depth data to the initial data (return the modified data to the caller)
+  for(var key in data){
+    //console.log('populating '+key);
+    var depth = lengthToRoot(data, key, 0);
+    data[key].depth = depth;
+    if(depthMap[depth]){
+      depthMap[depth].push(data[key]);
     }else{
-      depthNodes[n]=[node];
+      depthMap[depth] = [data[key]];
     }
-    return n;
   }
-  if(node.children.length > 0){
-    //console.log(node.children);
-  } else {
-    // console.log('no further children');
-    return -2;
-  }
-  if(node.children.indexOf(target)>0){
-    return n
-  } else{
-    node.children.forEach(function(entry){
-      return findDepthWorker(entry, target, n+1);
-    });
-    return;
+  return data;
+}
+
+var lengthToRoot = function(data, key, depth){
+  if(key==='root'){
+    return depth;
+  }else{
+    return lengthToRoot(data, data[key].parent, depth+1);
   }
 }
+
+
+
+
+
+//**********************
+//Drawing Functions
+//This is a split between the tree logic and drawings
+//Purely for the human at the keyboard
+//**********************
 
 //convenience method
 var drawDetailedBox = function(target, x, y, title){
@@ -148,7 +169,6 @@ var drawLabel = function(target, labelText){
   ctx.fillStyle="#ff0000";
   ctx.fillText(labelText, 10, fontsize);
 }
-
 //draw an appropriately positioned title for the object-box located at x,y
 var drawTitle=function(target, x, y, title){
   var fontHeight = 20;
@@ -158,7 +178,6 @@ var drawTitle=function(target, x, y, title){
   ctx.fillStyle="#000000";
   ctx.fillText(title, x+defaultBox.width/2, y+fontHeight);
 }
-
 //draw a smaller box in the top right corner of the parent box at x,y
 var cornerBox=function(target, x, y){
   x = x + defaultBox.width - 30;
