@@ -78,21 +78,15 @@ var updateCanvasParameters = function(target){
   c.width = c.width < minWidth ? minWidth : c.width;
 }
 
+//go through the depthmap to draw
 var drawTree = function(target, data){
   for(var key in depthMap){
     var depthArray = depthMap[key];
     intelliDraw(target, depthArray, key);
-    //for(var i=0; i<depthArray.length; i++){
-      //print the nodes here, go dumb for now
-      //console.log('draw');
-      //console.log(depthArray[i]);
-      //yPost = childOffset.y*key;
-      //xPost = 50+childOffset.x*i;
-      //drawDetailedBox(target, xPost, yPost, depthArray[i].title);
-    //}
   }
 }
 
+//evenly distribute the nodes in the space allotted
 var intelliDraw = function(target, depthArray, depth){
   var c = document.getElementById(target);
   //try to center align by division
