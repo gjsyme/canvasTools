@@ -10,8 +10,7 @@ Right now this is minimal function, scale, etc. Right now you can 'host' by open
   - maybe horizontal
   - how to handle issues that are obviously way too big to be meaningful on a reasonable monitor size
 - Establish interactivity of the visualization
-  - Set watchers to react to the boxes (nodes) being clicked in a useful manner
-    - Useful manner ultimately means showing detail and allowing the user to edit
+  - Have to update the offsets based upon scroll position to keep track of where you are on the image (not just relative to canvas frame)
 - Connect the datasource to a Mongo instance
   - Include the schema and/or testdata in this repo
 - Set up a server with this repo for the purpose of having Mongo + Web Server that will simulate the normal operational relationship

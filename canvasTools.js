@@ -16,6 +16,7 @@ var childOffset = {
 };
 var depthNodes = {};
 var depthMap = {};
+var canvasOffsets={};
 
 //testdata is a format that exists in my application that i would like this for. A full object is listed below.
 //data is stored in a MongoDB with the following information (currenlty input is by tree strucutre - you have to define a parent to create children)
@@ -45,9 +46,49 @@ var testMap = arrayToMap(testData);
 //full sample object out of MongoDB
 //{ "_id" : "mMY3vZ6kc6K786shT", "name" : "IdeaLab", "target" : "/content", "parent" : "home", "category" : "idealab", "user" : "Wzh6JMb7LcppDtwBN", "title" : "IdeaLab", "body" : "Use our 3d printer, 3d scanner, software development studio, and other exciting technical resources!" }
 
+var clickReporter = function(event){
+  //have to ensure that i have an up to date offset for the scroll and for the canvas at the time that the click happens.
+  var x = event.x - canvasOffsets.x;
+  var y = event.y - canvasOffsets.y;
+  console.log("clicked at: ("+x+", "+y+")");
+  findBox(x, y);
+}
+
+var findBox = function(x, y){
+  var node = false;
+  //determine if there is a box under the location x,y in the canvas
+  //can first determine depth just by y position
+  var depth = parseInt(y / 150);
+  //console.log('hack depth:'+depth);
+  for(var key in depthMap[depth]){
+    var temp = depthMap[depth][key];
+    //console.log(temp.title+": "+temp.x+" - "+temp.x+defaultBox.width);
+    if(x>temp.x){
+      //console.log('right of left-edge');
+      if(x<(temp.x+defaultBox.width)){
+        //console.log('left of right-edge');
+        console.log('on box: '+temp.title);
+      }
+    }
+    //any further action
+  }
+
+  return node;
+}
+
+var scrollUpdater = function(){
+  //do stuff
+  console.log('scroll updater');
+}
+
 var drawData = function(target){
   //target is the canvas id on the page
   drawDataSet(target, testMap);
+  var c = document.getElementById(target);
+  canvasOffsets.x = c.offsetLeft;
+  canvasOffsets.y = c.offsetTop;
+  c.addEventListener('click', clickReporter, false);
+  c.addEventListener('scroll', scrollUpdater);
 }
 
 //draw a data object to the canvas (target)
@@ -66,7 +107,7 @@ var updateCanvasParameters = function(target){
   var totalDepth = Object.keys(depthMap).length;
   var totalWidth=0;
   for(var key in depthMap){
-    console.log(depthMap[key].length);
+    // console.log(depthMap[key].length);
     if(depthMap[key].length > totalWidth){totalWidth = depthMap[key].length;}
   }
 
@@ -91,12 +132,32 @@ var intelliDraw = function(target, depthArray, depth){
   var c = document.getElementById(target);
   //try to center align by division
   var xoffset = c.width / (depthArray.length+1);
-  console.log(xoffset);
+  // console.log(xoffset);
   for(var i=0; i<depthArray.length; i++){
     yPost = childOffset.y*depth;
     xPost = xoffset*(i+1);
     drawDetailedBox(target, xPost, yPost, depthArray[i].title);
+    var node = depthArray[i];
+    node.x = xPost;
+    node.y = yPost;
+    // console.log(node);
+    saveToDepthArray(node);
   }
+  //console.log(depthMap);
+}
+
+var saveToDepthArray = function(node){
+  // console.log('saving node to depthArray: '+node.title);
+  var tempArray = depthMap[node.depth];
+  //console.log(tempArray);
+  for(var i=0; i<tempArray.length; i++){
+    if(node.title == tempArray[i].title){
+      //do stuff
+      // console.log('match');
+      tempArray[i] = node;
+    }
+  }
+  depthMap[node.depth] = tempArray;
 }
 
 var populateChildren = function(data){
