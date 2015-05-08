@@ -155,7 +155,7 @@ var drawLinks = function(target){
   for(var key in depthMap){
     if(key==0) continue;
     for(var node in depthMap[key]){
-      console.log(depthMap[key][node]);
+      //console.log(depthMap[key][node]);
       child = depthMap[key][node];
       parent = findParent(child);
       drawStroke(target, child.x, child.y, parent.x, parent.y);
@@ -168,7 +168,7 @@ var findParent = function(childNode){
   if(child.depth ==0) return false;
   var parentDepth = child.depth -1;
   for(var key in depthMap[parentDepth]){
-    console.log(depthMap[parentDepth][key].title);
+    //console.log(depthMap[parentDepth][key].title);
     if(depthMap[parentDepth][key].title == childNode.parent){
       return depthMap[parentDepth][key];
     }
@@ -291,7 +291,7 @@ var cornerBox=function(target, x, y){
   ctx.fillRect(x,y,30,20);
 }
 var drawStroke=function(target, x1, y1, x2, y2){
-  console.log(target);
+  //console.log(target);
   var c = document.getElementById(target);
   var ctx = c.getContext('2d');
   ctx.beginPath();
