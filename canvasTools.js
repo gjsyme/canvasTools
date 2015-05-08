@@ -47,11 +47,31 @@ var testMap = arrayToMap(testData);
 //{ "_id" : "mMY3vZ6kc6K786shT", "name" : "IdeaLab", "target" : "/content", "parent" : "home", "category" : "idealab", "user" : "Wzh6JMb7LcppDtwBN", "title" : "IdeaLab", "body" : "Use our 3d printer, 3d scanner, software development studio, and other exciting technical resources!" }
 
 var clickReporter = function(event){
+  console.log(event);
   //have to ensure that i have an up to date offset for the scroll and for the canvas at the time that the click happens.
+  updateOffsets(event.target.getAttribute("id"));
   var x = event.x - canvasOffsets.x;
   var y = event.y - canvasOffsets.y;
   console.log("clicked at: ("+x+", "+y+")");
-  findBox(x, y);
+  var selected = findBox(x, y);
+  console.log(selected);
+  updateBox(selected);
+}
+
+var updateBox = function(selectedNode){
+  if(selectedNode){
+    document.getElementById('node-title').innerHTML = selectedNode.title;
+    document.getElementById('node-description').innerHTML = selectedNode.description;
+  } else {
+    document.getElementById('node-title').innerHTML = '';
+    document.getElementById('node-description').innerHTML = '';
+  }
+}
+
+var updateOffsets = function(target){
+  var c = document.getElementById(target);
+  canvasOffsets.x = c.offsetLeft - window.pageXOffset;
+  canvasOffsets.y = c.offsetTop - window.pageYOffset;
 }
 
 var findBox = function(x, y){
@@ -67,12 +87,13 @@ var findBox = function(x, y){
       //console.log('right of left-edge');
       if(x<(temp.x+defaultBox.width)){
         //console.log('left of right-edge');
-        console.log('on box: '+temp.title);
+        //console.log('on box: '+temp.title);
+        //so this is where we trigger a modal or something
+        node = temp;
       }
     }
     //any further action
   }
-
   return node;
 }
 
@@ -125,6 +146,34 @@ var drawTree = function(target, data){
     var depthArray = depthMap[key];
     intelliDraw(target, depthArray, key);
   }
+  //console.log(depthMap);
+  drawLinks(target);
+}
+
+var drawLinks = function(target){
+  //skip zero as it has no parents, but go through each tier and link to parent
+  for(var key in depthMap){
+    if(key==0) continue;
+    for(var node in depthMap[key]){
+      console.log(depthMap[key][node]);
+      child = depthMap[key][node];
+      parent = findParent(child);
+      drawStroke(target, child.x, child.y, parent.x, parent.y);
+      drawDetailedBox(target, child.x, child.y, child.title);
+    }
+  }
+}
+
+var findParent = function(childNode){
+  if(child.depth ==0) return false;
+  var parentDepth = child.depth -1;
+  for(var key in depthMap[parentDepth]){
+    console.log(depthMap[parentDepth][key].title);
+    if(depthMap[parentDepth][key].title == childNode.parent){
+      return depthMap[parentDepth][key];
+    }
+  }
+  return false;
 }
 
 //evenly distribute the nodes in the space allotted
@@ -240,4 +289,14 @@ var cornerBox=function(target, x, y){
   var ctx = c.getContext('2d');
   ctx.fillStyle="#cccccc";
   ctx.fillRect(x,y,30,20);
+}
+var drawStroke=function(target, x1, y1, x2, y2){
+  console.log(target);
+  var c = document.getElementById(target);
+  var ctx = c.getContext('2d');
+  ctx.beginPath();
+  ctx.moveTo(x1+defaultBox.width/2, y1+defaultBox.height/2);
+  ctx.lineTo(x2+defaultBox.width/2, y2+defaultBox.height/2);
+  ctx.strokeStyle="black";
+  ctx.stroke();
 }

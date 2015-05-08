@@ -2,14 +2,25 @@
   <head>
     <title>Test of canvas (from the filesystem)</title>
     <script src="./canvasTools.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
   </head>
   <body>
     <h1>Test data in a canvas</h1>
-    <div style="overflow:scroll" width=800>
+    <!-- <div style="overflow:scroll" width=800> -->
+    <div>
       <canvas id="myCanvas" width="640" height="480" style="border:1px solid #000000;">
         <p>You can't render canvas, it would seem</p>
       </canvas>
       <p>This is after the canvas</p>
+      <div class="row">
+        <div class="databox col-md-6 col-md-offset-3">
+          <h2 class="text-center">Selected Node</h2>
+          <h3 class="text-center" id="node-title"></h3>
+          <p class="text-center" id="node-description"></p>
+        </div>
+      </div>
     </div>
   </body>
 </html>
