@@ -62,9 +62,11 @@ var updateBox = function(selectedNode){
   if(selectedNode){
     document.getElementById('node-title').innerHTML = selectedNode.title;
     document.getElementById('node-description').innerHTML = selectedNode.description;
+    document.getElementById('node-create-child').disabled = false;
   } else {
     document.getElementById('node-title').innerHTML = '';
     document.getElementById('node-description').innerHTML = '';
+    document.getElementById('node-create-child').disabled = true;
   }
 }
 
