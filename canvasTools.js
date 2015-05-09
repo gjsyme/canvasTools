@@ -6,22 +6,18 @@ var offsets = {
   x: 100,
   y: 100
 };
-var rootBox = {
-  x:200,
-  y:0
-};
 var childOffset = {
   x:300,
   y: 150
 };
-var depthNodes = {};
 var depthMap = {};
 var canvasOffsets={};
+var canvasToolTarget;
 
 //testdata is a format that exists in my application that i would like this for. A full object is listed below.
 //data is stored in a MongoDB with the following information (currenlty input is by tree strucutre - you have to define a parent to create children)
 //as such, relationships are driven by the child (as the parent upon creation has no concept of its children)
-
+//***********************TEST DATA SETUP************
 //testdata in a really roundabout way because my brain prefers it.
 var testData = [
   {title: 'root', description: 'the root node', parent: ''},
@@ -42,12 +38,15 @@ var arrayToMap = function(array){
   return ret;
 }
 var testMap = arrayToMap(testData);
+//*************************************************
+//will have to address how this is to be handled with a real datasource
 
 //full sample object out of MongoDB
 //{ "_id" : "mMY3vZ6kc6K786shT", "name" : "IdeaLab", "target" : "/content", "parent" : "home", "category" : "idealab", "user" : "Wzh6JMb7LcppDtwBN", "title" : "IdeaLab", "body" : "Use our 3d printer, 3d scanner, software development studio, and other exciting technical resources!" }
 
+//determine what exactly is going on with a click that has been recorded by the listenere
 var clickReporter = function(event){
-  console.log(event);
+  // console.log(event);
   //have to ensure that i have an up to date offset for the scroll and for the canvas at the time that the click happens.
   updateOffsets(event.target.getAttribute("id"));
   var x = event.x - canvasOffsets.x;
@@ -58,20 +57,58 @@ var clickReporter = function(event){
   updateBox(selected);
 }
 
+//keep track of what is associated with the node box
 var updateBox = function(selectedNode){
   if(selectedNode){
-    document.getElementById('node-title').innerHTML = selectedNode.title;
-    document.getElementById('node-description').innerHTML = selectedNode.description;
-    document.getElementById('node-create-child').disabled = false;
+    document.getElementById('node-title').value = selectedNode.title;
+    document.getElementById('node-description').value = selectedNode.description;
+    document.getElementById('node-depth').value = selectedNode.depth;
+    document.getElementById('div-hider').hidden="";
+    document.getElementById('node-create-child').addEventListener('click', addChildNode);
   } else {
-    document.getElementById('node-title').innerHTML = '';
-    document.getElementById('node-description').innerHTML = '';
-    document.getElementById('node-create-child').disabled = true;
+    document.getElementById('node-title').value = '';
+    document.getElementById('node-description').value = '';
+    document.getElementById('div-hider').hidden="hidden";
+    document.getElementById('node-create-child').removeEventListener('click', addChildNode);
   }
 }
 
-var updateOffsets = function(target){
-  var c = document.getElementById(target);
+//create and save the new child node based upon parent node found in addChildeNode
+var createChildNode = function(node){
+  var childNode = {};
+  childNode.title = 'child of '+node.title;
+  childNode.description = 'this is the child of '+node.title;
+  childNode.parent = node.title;
+  childNode.depth = node.depth+1;
+  //depthMap[childNode.depth].push
+  testData.push(childNode);
+  console.log(testData);
+  testMap = arrayToMap(testData);
+  clearCanvas(canvasToolTarget);
+  drawData(canvasToolTarget);
+}
+//handles the click, finds the current node, calls for the creation of the new node
+var addChildNode = function(event){
+  //do stuff here
+  var depth = document.getElementById('node-depth').value;
+  var title = document.getElementById('node-title').value;
+  console.log('Looking for '+title+' at depth '+depth);
+  var node;
+  //populate the node
+  for(var key in depthMap[depth]){
+    console.log('key: '+key+ ' looking for '+title);
+    if(depthMap[depth][key].title==title){
+      node = depthMap[depth][key];
+      break;
+    }
+  }
+  console.log(node);
+  createChildNode(node);
+}
+
+//ensure that the click is registring to the right spot on the canvas
+var updateOffsets = function(canvasToolTarget){
+  var c = document.getElementById(canvasToolTarget);
   canvasOffsets.x = c.offsetLeft - window.pageXOffset;
   canvasOffsets.y = c.offsetTop - window.pageYOffset;
 }
@@ -99,32 +136,29 @@ var findBox = function(x, y){
   return node;
 }
 
-var scrollUpdater = function(){
-  //do stuff
-  console.log('scroll updater');
-}
-
 var drawData = function(target){
+  //reset data if you are not the first call here...
+  depthMap = {};
   //target is the canvas id on the page
-  drawDataSet(target, testMap);
-  var c = document.getElementById(target);
+  canvasToolTarget = target;
+  drawDataSet(canvasToolTarget, testMap);
+  var c = document.getElementById(canvasToolTarget);
   canvasOffsets.x = c.offsetLeft;
   canvasOffsets.y = c.offsetTop;
   c.addEventListener('click', clickReporter, false);
-  c.addEventListener('scroll', scrollUpdater);
 }
 
 //draw a data object to the canvas (target)
-var drawDataSet = function(target, data){
-  drawLabel(target, "Demo Label");
+var drawDataSet = function(canvasToolTarget, data){
+  drawLabel(canvasToolTarget, "Demo Label");
   //create a children field for each item in the map based on the parent field
   data = populateChildren(data);
-  updateCanvasParameters(target);
-  drawTree(target, data);
+  updateCanvasParameters(canvasToolTarget);
+  drawTree(canvasToolTarget, data);
 }
 
-var updateCanvasParameters = function(target){
-  var c = document.getElementById(target);
+var updateCanvasParameters = function(canvasToolTarget){
+  var c = document.getElementById(canvasToolTarget);
   var ctx = c.getContext('2d');
 
   var totalDepth = Object.keys(depthMap).length;
@@ -136,23 +170,21 @@ var updateCanvasParameters = function(target){
 
   var minHeight = childOffset.y*totalDepth + 100;
   var minWidth = childOffset.x*totalWidth + 100;
-  //console.log('height: '+c.height+" minimum: "+minHeight);
-  //console.log('width: '+c.width+" minimum: "+minWidth);
   c.height = c.height < minHeight ? minHeight : c.height;
   c.width = c.width < minWidth ? minWidth : c.width;
 }
 
 //go through the depthmap to draw
-var drawTree = function(target, data){
+var drawTree = function(canvasToolTarget, data){
   for(var key in depthMap){
     var depthArray = depthMap[key];
-    intelliDraw(target, depthArray, key);
+    intelliDraw(canvasToolTarget, depthArray, key);
   }
   //console.log(depthMap);
-  drawLinks(target);
+  drawLinks(canvasToolTarget);
 }
 
-var drawLinks = function(target){
+var drawLinks = function(canvasToolTarget){
   //skip zero as it has no parents, but go through each tier and link to parent
   for(var key in depthMap){
     if(key==0) continue;
@@ -160,8 +192,8 @@ var drawLinks = function(target){
       //console.log(depthMap[key][node]);
       child = depthMap[key][node];
       parent = findParent(child);
-      drawStroke(target, child.x, child.y, parent.x, parent.y);
-      drawDetailedBox(target, child.x, child.y, child.title);
+      drawStroke(canvasToolTarget, child.x, child.y, parent.x, parent.y);
+      drawDetailedBox(canvasToolTarget, child.x, child.y, child.title);
     }
   }
 }
@@ -179,15 +211,15 @@ var findParent = function(childNode){
 }
 
 //evenly distribute the nodes in the space allotted
-var intelliDraw = function(target, depthArray, depth){
-  var c = document.getElementById(target);
+var intelliDraw = function(canvasToolTarget, depthArray, depth){
+  var c = document.getElementById(canvasToolTarget);
   //try to center align by division
   var xoffset = c.width / (depthArray.length+1);
   // console.log(xoffset);
   for(var i=0; i<depthArray.length; i++){
     yPost = childOffset.y*depth;
     xPost = xoffset*(i+1);
-    drawDetailedBox(target, xPost, yPost, depthArray[i].title);
+    drawDetailedBox(canvasToolTarget, xPost, yPost, depthArray[i].title);
     var node = depthArray[i];
     node.x = xPost;
     node.y = yPost;
@@ -301,4 +333,11 @@ var drawStroke=function(target, x1, y1, x2, y2){
   ctx.lineTo(x2+defaultBox.width/2, y2+defaultBox.height/2);
   ctx.strokeStyle="black";
   ctx.stroke();
+}
+//clear the existing canvas
+var clearCanvas = function(target){
+  var c = document.getElementById(target);
+  var ctx = c.getContext('2d');
+  ctx.beginPath();
+  ctx.clearRect(0,0,c.width,c.height);
 }

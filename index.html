@@ -16,9 +16,16 @@
       <div class="row">
         <div class="databox col-md-6 col-md-offset-3">
           <h2 class="text-center">Selected Node</h2>
-          <h3 class="text-center" id="node-title"></h3>
-          <p class="text-center" id="node-description"></p>
-          <button class="btn btn-primary center-block" id="node-create-child" disabled="true">Create Child</button>
+          <form>
+            <!-- <h3 class="text-center" id="node-title"></h3> -->
+            <!-- <p class="text-center" id="node-description"></p> -->
+            <input type='text' class="form-control" name='title' id='node-title' placeholder='Node Title'/>
+            <input type='text' class="form-control" name='description' id='node-description' placeholder='Node Description'/>
+            <input type='hidden' name='depth' id='node-depth'/>
+          </form>
+          <div class="section" id="div-hider" hidden="true">
+            <button class="btn btn-primary center-block" id="node-create-child">Create Child</button>
+          </div>
         </div>
       </div>
     </div>
