@@ -178,7 +178,9 @@ var drawDataSet = function(canvasToolTarget, data){
   drawLabel(canvasToolTarget, "Demo Label");
   //create a children field for each item in the map based on the parent field
   data = populateChildren(data);
+  console.log(data);
   updateCanvasParameters(canvasToolTarget);
+  console.log('param update');
   drawTree(canvasToolTarget, data);
 }
 
@@ -278,9 +280,9 @@ var populateChildren = function(data){
   //populate the depthMap with depth: [node1, node2, node...] for tracking purposes
   //experimentally, also adding the depth data to the initial data (return the modified data to the caller)
   for(var key in data){
-    console.log('populating '+key);
+    // console.log('populating '+key);
     var depth = lengthToRoot(data, key, 0);
-    console.log('at depth: '+depth);
+    // console.log('at depth: '+depth);
     data[key].depth = depth;
     if(depthMap[depth]){
       depthMap[depth].push(data[key]);
@@ -288,13 +290,13 @@ var populateChildren = function(data){
       depthMap[depth] = [data[key]];
     }
   }
-  console.log(depthMap);
-  if(typeof depthMap[0] == "undefined") depthMap[0] = [{"title": "home", "description": "default home page"}];
+  // console.log(depthMap);
+  if(typeof depthMap[0] == "undefined") depthMap[0] = [{"title": "home", "description": "default home page", "depth": 0}];
   return data;
 }
 
 var lengthToRoot = function(data, key, depth){
-  console.log('lengthToRoot: '+key);
+  // console.log('lengthToRoot: '+key);
   //console.log(data[key]);
   if(key=="home") return depth+1;
   if(data[key]){
@@ -305,9 +307,9 @@ var lengthToRoot = function(data, key, depth){
       //console.log('not a child of root - digging up');
       //console.log(data[key].parent);
       if(fetchedNode){
-        console.log('fetched node');
-        var fetchNode = fetchNodeByTitle(data, key);
-        console.log(fetchedNode);
+        // console.log('fetched node');
+        // var fetchNode = fetchNodeByTitle(data, key);
+        // console.log(fetchedNode);
         //console.log(fetchNodeByTitle(data, key));
         return lengthToRoot(data, fetchedNode.parent, depth+1);
       }else{
@@ -315,21 +317,39 @@ var lengthToRoot = function(data, key, depth){
       }
     }
     return -1;
+  }else{
+    var fetchNode = fetchNodeByTitle(data, key);
+    if(fetchNode){
+      // console.log('fetched node in alt path');
+      // console.log(fetchNode);
+      return lengthToRoot(data, fetchNode.parent, depth+1);
+    }else{
+      return lengthToRoot(data, data[key].parent, depth+1);
+    }
   }
 }
 
 //search by key that will yield the node that is the parent of the node with that key
 var fetchNodeByTitle = function(nodeMap, cat){
-  console.log('checking by key: '+cat);
+  // console.log('checking by key: '+cat);
   var tempNode = nodeMap[cat];
-  for(key in nodeMap){
-    if(nodeMap[key].category == tempNode.parent){
-      console.log('found target');
-      console.log(nodeMap[key]);
-      return nodeMap[key];
+  // console.log(tempNode);
+  if(typeof tempNode == 'undefined'){
+  //   console.log('undefined');
+    for(key in nodeMap){
+      if(nodeMap[key].category == cat) tempNode = nodeMap[key];
     }
+    // console.log('updated tempNode to '+tempNode.title);
   }
-  console.log('i have failed you');
+  return tempNode;
+  // for(key in nodeMap){
+  //   if(nodeMap[key].category == tempNode.parent){
+  //     console.log('found target');
+  //     console.log(nodeMap[key]);
+  //     return nodeMap[key];
+  //   }
+  // }
+  // console.log('i have failed you');
   return false;
 }
 
