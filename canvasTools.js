@@ -7,7 +7,7 @@ var offsets = {
   y: 100
 };
 var childOffset = {
-  x:300,
+  x:250,
   y: 150
 };
 var depthMap = {};
@@ -20,24 +20,49 @@ var canvasToolTarget;
 //***********************TEST DATA SETUP************
 //testdata in a really roundabout way because my brain prefers it.
 var testData = [
-  {title: 'root', description: 'the root node', parent: ''},
-  {title: "one", description: "this is the one thing", parent: 'root'},
-  {title: 'two', description: 'this is the other thing', parent: 'root'},
-  {title: 'a', description: 'this is a', parent: 'one'},
-  {title: 'b', description: 'this is b', parent: 'one'},
-  {title: 'c', description: 'this is c', parent: 'one'},
-  {title: 'x', description: 'this is x', parent: 'two'},
-  {title: 'y', description: 'this is y', parent: 'two'},
-  {title: 'z', description: 'this is z', parent: 'two'}
+  // {title: 'root', description: 'the root node', parent: ''},
+  // {title: "one", description: "this is the one thing", parent: 'root'},
+  // {title: 'two', description: 'this is the other thing', parent: 'root'},
+  // {title: 'a', description: 'this is a', parent: 'one'},
+  // {title: 'b', description: 'this is b', parent: 'one'},
+  // {title: 'c', description: 'this is c', parent: 'one'},
+  // {title: 'x', description: 'this is x', parent: 'two'},
+  // {title: 'y', description: 'this is y', parent: 'two'},
+  // {title: 'z', description: 'this is z', parent: 'two'}
+  { "_id" : "gC5mxB6iCzLvSbtHW", "name" : "I would like to eat", "target" : "/content", "parent" : "home", "category" : "food", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Food", "body" : "There are many competitive options for satisfying your caloric requirements. While eastern cuisine is delicious, you may find it short lived in providing satiety; conversely, western fare has been known to become monotonous and potentially less-than-healthy in the Standard American Diet (SAD). As a compromise, Mediterranean dishes are often a great selection." },
+  { "_id" : "qhpreMZYqchraJiji", "name" : "I would like to watch a movie", "target" : "/content", "parent" : "home", "category" : "movies", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Movies", "body" : "Movies are divided up into various genres, which are listed below. Based upon what type of movie experience you are looking for, we can help you find exactly what you're looking for." },
+  { "_id" : "wfHz8tBjKyNmK4kmH", "name" : "I would like to read a book", "target" : "/content", "parent" : "home", "category" : "books", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Reading", "body" : "There are many different things to consider when selecting reading material. To start, please select a category from below:" },
+  { "_id" : "JF5pHhf4WngyDtrea", "name" : "I would like to find things on the internet", "target" : "/content", "parent" : "home", "category" : "internet", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "The Web", "body" : "The infinite (dependent upon addressable IP space) expanses of the internet - too many things to even attempt to categorize. Here's a very broad selection of things you may wish to see while on the internet - please pick one:" },
+  { "_id" : "qaMBzBzPjBvnJ3LNQ", "name" : "Social Aggregated Content", "target" : "//www.reddit.com", "parent" : "internet", "category" : "", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "", "body" : "" },
+  { "_id" : "hQR2fnYAc7AaN5yJr", "name" : "Kitten GIFs", "target" : "//giphy.com/search/kitten", "parent" : "internet", "category" : "", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "", "body" : "" },
+  { "_id" : "8jHdM6Jgjuqg83gYT", "name" : "More Kitten GIFs", "target" : "//www.tumblr.com/tagged/kitten-gifs", "parent" : "internet", "category" : "", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "", "body" : "" },
+  { "_id" : "jZaY2PkQqmHMJfqwY", "name" : "Fiction", "target" : "/content", "parent" : "books", "category" : "fiction", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Fiction", "body" : "Creativity at its best, and most papery. Well, except for origami, but who can really compete with all those crazy folds? And maybe those people who do crazy papercraft projects - those can be pretty excellent, too. So maybe it's really more like the third or fourth most creative thing you can do with paper. Anyway, what kind of story do you want to read? Pick below:" },
+  { "_id" : "eoXLBnsepx9DvL5q8", "name" : "Non-Fiction", "target" : "/content", "parent" : "books", "category" : "nonfiction", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Non-Fiction", "body" : "Like the news, but potentially millenia late. This stuff is pretty interesting though, and covers a wide range of significant events and people, as well as the latest in self improvement, scientific thought, and research. Pick you area of interest:" },
+  { "_id" : "8h5mCNQ82mBi8x8mn", "name" : "Biography", "target" : "/content", "parent" : "nonfiction", "category" : "biography", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Biographies", "body" : "Find out more about famous dead people, famous living people, infamous people living or dead, and otherwise-unknown people with enough resources to get someone to write a book about them!" },
+  { "_id" : "B6M6BzQMavTyDiBvn", "name" : "Historical Figures", "target" : "/stub", "parent" : "biography", "category" : "historical-biography", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Historical Figures", "body" : "Something something famous dead people something." },
+  { "_id" : "gFkXWAwrsKA9EHR7K", "name" : "History", "target" : "/stub", "parent" : "nonfiction", "category" : "history", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "History", "body" : "Look at what happened in the past to prevent it from happening again in the future. If doing is more your style, then take notes and do it better than the last guy. In either case, history tells us about what, how, and why things have happened before." },
+  { "_id" : "qFarQafY73Cm7sDzR", "name" : "Reference", "target" : "/stub", "parent" : "nonfiction", "category" : "reference", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Reference Material", "body" : "A catchall for all other non-fiction that doesn't fall into categories listed under separate sections." },
+  { "_id" : "y2ctbATkyiGWoQvZq", "name" : "Textbooks", "target" : "/stub", "parent" : "nonfiction", "category" : "textbooks", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Textbooks", "body" : "Just in case you're looking to catch up on that three dimensional calculus or organic chemistry class you weren't really paying attention to freshman year..." },
+  { "_id" : "ZLs58sKvZzigzwjLR", "name" : "Bars and Grills", "target" : "/content", "parent" : "food", "category" : "barandgrill", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Bars and Grills", "body" : "Standard american fare!" },
+  { "_id" : "vcMKCSE589GrbHxA9", "name" : "Ethnic Foods", "target" : "/content", "parent" : "food", "category" : "ethnic", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Ethnic Food", "body" : "Find restaurants / food by the region of its origin" },
+  { "_id" : "qmsuSpharFruoYRiE", "name" : "Action", "target" : "/content", "parent" : "movies", "category" : "action", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Action Movies", "body" : "More explosions than a real war and less plot than a three panel comic - why would you pay for something that requires you to use your brain?" },
+  { "_id" : "X3w3ueMwQZaQXs4bg", "name" : "Adventure", "target" : "/content", "parent" : "movies", "category" : "adventure", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Adventure", "body" : "I don't even know what this genre is supposed to be about. No, really. Like it doesn't make sense. Is it a fictional travel documentary?" },
+  { "_id" : "EzJTXYDsiaDSYRwpB", "name" : "Drama", "target" : "/content", "parent" : "movies", "category" : "drama", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Drama", "body" : "Just in case you're enjoying your own life, spend the next two hours exploring the awkwardness, struggles, and terrible circumstance that befalls other people so that you can also be depressed." },
+  { "_id" : "zQ4LAyBynthDExbeF", "name" : "Fantasy", "target" : "/stub", "parent" : "fiction", "category" : "fantasy", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Fantasy books", "body" : "Dragons? Check. Armor? Check. Swords? Thirty three varieties and another 26 that aren't quite swords, but don't exist in the real world. Angels? Yes. Demons? Them too. Angels and Demons? ...try suspense." },
+  { "_id" : "ouLhNaJKxocCwx5EQ", "name" : "Science Fiction", "target" : "/stub", "parent" : "fiction", "category" : "scifi", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Science Fiction", "body" : "Speculative fiction as rebranded since the emergence of the cult of 'science' (but that's a topic for a difference website). Lasers and spaceships and robots, oh my!" },
+  { "_id" : "LLoRbB5yFnp7kxtgY", "name" : "Young Adult", "target" : "/stub", "parent" : "fiction", "category" : "young-adult", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Young Adult", "body" : "The reading options for tweens and others who prefer their vocabulary limited, their sentence structure limited, and their page counts in the double-digits." },
+  { "_id" : "vR5ZEacwy735CS5x3", "name" : "Grocery Stores", "target" : "/content", "parent" : "food", "category" : "grocery", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Grocery Stores", "body" : "Whether its microwave dinner or DIY meals, a store is the place to get started." }
 ];
 var arrayToMap = function(array){
   var ret = {};
   for(var i=0; i<array.length; i++){
+    if(array[i].title=="") array[i].title=array[i].name; //oneoff to eliminate null title cases
     ret[array[i].title] = array[i];
   }
   return ret;
 }
 var testMap = arrayToMap(testData);
+//console.log(testMap);
 //*************************************************
 //will have to address how this is to be handled with a real datasource
 
@@ -218,7 +243,11 @@ var intelliDraw = function(canvasToolTarget, depthArray, depth){
   // console.log(xoffset);
   for(var i=0; i<depthArray.length; i++){
     yPost = childOffset.y*depth;
-    xPost = xoffset*(i+1);
+    if(depthArray.length==1){
+      xPost = xoffset;
+    }else{
+      xPost=xoffset*(i+1)-xoffset/2;
+    }
     drawDetailedBox(canvasToolTarget, xPost, yPost, depthArray[i].title);
     var node = depthArray[i];
     node.x = xPost;
@@ -231,8 +260,9 @@ var intelliDraw = function(canvasToolTarget, depthArray, depth){
 
 var saveToDepthArray = function(node){
   // console.log('saving node to depthArray: '+node.title);
+  // console.log('saving at depth: '+node.depth);
   var tempArray = depthMap[node.depth];
-  //console.log(tempArray);
+  // console.log(tempArray);
   for(var i=0; i<tempArray.length; i++){
     if(node.title == tempArray[i].title){
       //do stuff
@@ -248,8 +278,9 @@ var populateChildren = function(data){
   //populate the depthMap with depth: [node1, node2, node...] for tracking purposes
   //experimentally, also adding the depth data to the initial data (return the modified data to the caller)
   for(var key in data){
-    //console.log('populating '+key);
+    console.log('populating '+key);
     var depth = lengthToRoot(data, key, 0);
+    console.log('at depth: '+depth);
     data[key].depth = depth;
     if(depthMap[depth]){
       depthMap[depth].push(data[key]);
@@ -257,17 +288,50 @@ var populateChildren = function(data){
       depthMap[depth] = [data[key]];
     }
   }
+  console.log(depthMap);
+  if(typeof depthMap[0] == "undefined") depthMap[0] = [{"title": "home", "description": "default home page"}];
   return data;
 }
 
 var lengthToRoot = function(data, key, depth){
-  if(key==='root'){
-    return depth;
-  }else{
-    return lengthToRoot(data, data[key].parent, depth+1);
+  console.log('lengthToRoot: '+key);
+  //console.log(data[key]);
+  if(key=="home") return depth+1;
+  if(data[key]){
+    if(data[key].parent==="home"){
+      return depth+1;
+    }else{
+      var fetchedNode = fetchNodeByTitle(data, key);
+      //console.log('not a child of root - digging up');
+      //console.log(data[key].parent);
+      if(fetchedNode){
+        console.log('fetched node');
+        var fetchNode = fetchNodeByTitle(data, key);
+        console.log(fetchedNode);
+        //console.log(fetchNodeByTitle(data, key));
+        return lengthToRoot(data, fetchedNode.parent, depth+1);
+      }else{
+        return lengthToRoot(data, data[key].parent, depth+1);
+      }
+    }
+    return -1;
   }
 }
 
+//search by key that will yield the node that is the parent of the node with that key
+var fetchNodeByTitle = function(nodeMap, cat){
+  console.log('checking by key: '+cat);
+  var tempNode = nodeMap[cat];
+  for(key in nodeMap){
+    if(nodeMap[key].category == tempNode.parent){
+      console.log('found target');
+      console.log(nodeMap[key]);
+      return nodeMap[key];
+    }
+  }
+  console.log('i have failed you');
+  return false;
+}
 
 
 
