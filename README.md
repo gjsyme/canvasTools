@@ -15,4 +15,5 @@ Right now this is minimal function, scale, etc. Right now you can 'host' by open
   - The existing 'test' data was pulled by db.collection.find(); so it should at least be fairly high integrity for my testing
     - your mileage may vary, of course
 - Set up a server with this repo for the purpose of having Mongo + Web Server that will simulate the normal operational relationship
+- Add a save button by which to update the existing nodes through the 'modal'
 - TBD

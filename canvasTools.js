@@ -7,9 +7,14 @@ var offsets = {
   y: 100
 };
 var childOffset = {
-  x:250,
+  x: 250,
   y: 150
 };
+var canvasScale = {
+  x: 1,
+  y: 1,
+  font: 1
+}
 var depthMap = {};
 var canvasOffsets={};
 var canvasToolTarget;
@@ -62,7 +67,7 @@ var clickReporter = function(event){
   updateOffsets(event.target.getAttribute("id"));
   var x = event.x - canvasOffsets.x;
   var y = event.y - canvasOffsets.y;
-  console.log("clicked at: ("+x+", "+y+")");
+  // console.log("clicked at: ("+x+", "+y+")");
   var selected = findBox(x, y);
   console.log(selected);
   updateBox(selected);
@@ -72,17 +77,18 @@ var clickReporter = function(event){
 var updateBox = function(selectedNode){
   if(selectedNode){
     document.getElementById('node-title').value = selectedNode.title;
-    document.getElementById('node-description').value = selectedNode.description;
-    document.getElementById('node-depth').value = selectedNode.depth;
-    document.getElementById('div-hider').hidden="";
-    document.getElementById('node-create-child').addEventListener('click', addChildNode);
-    overlay();
+    document.getElementById('node-body').value = selectedNode.body;
+    document.getElementById('node-parent').value = selectedNode.parent;
+    // document.getElementById('node-depth').value = selectedNode.depth;
+    // document.getElementById('div-hider').hidden="";
+    // document.getElementById('node-create-child').addEventListener('click', addChildNode);
+    toggleModal();
   } else {
     document.getElementById('node-title').value = '';
-    document.getElementById('node-description').value = '';
-    document.getElementById('div-hider').hidden="hidden";
-    document.getElementById('node-create-child').removeEventListener('click', addChildNode);
-    overlay();
+    document.getElementById('node-body').value = '';
+    // document.getElementById('div-hider').hidden="hidden";
+    // document.getElementById('node-create-child').removeEventListener('click', addChildNode);
+    toggleModal();
   }
 }
 
@@ -90,7 +96,7 @@ var updateBox = function(selectedNode){
 var createChildNode = function(node){
   var childNode = {};
   childNode.title = 'child of '+node.title;
-  childNode.description = 'this is the child of '+node.title;
+  childNode.body = 'this is the child of '+node.title;
   childNode.parent = node.title;
   childNode.depth = node.depth+1;
   if(Object.keys(depthMap).indexOf(childNode.depth) > 0){
@@ -161,8 +167,8 @@ var drawData = function(target){
   canvasToolTarget = target;
   drawDataSet(canvasToolTarget, testMap);
   var c = document.getElementById(canvasToolTarget);
-  canvasOffsets.x = c.offsetLeft;
-  canvasOffsets.y = c.offsetTop;
+  canvasOffsets.x = c.offsetLeft*canvasScale.x;
+  canvasOffsets.y = c.offsetTop*canvasScale.y;
   c.addEventListener('click', clickReporter, false);
 }
 
@@ -188,10 +194,22 @@ var updateCanvasParameters = function(canvasToolTarget){
     if(depthMap[key].length > totalWidth){totalWidth = depthMap[key].length;}
   }
 
-  var minHeight = childOffset.y*totalDepth + 100;
-  var minWidth = childOffset.x*totalWidth + 100;
-  c.height = c.height < minHeight ? minHeight : c.height;
-  c.width = c.width < minWidth ? minWidth : c.width;
+  var minHeight = childOffset.y*totalDepth + 100*canvasScale.y;
+  var minWidth = childOffset.x*totalWidth + 100*canvasScale.x;
+  //shrink x to fit
+  while(minWidth*canvasScale.x > c.width){
+    canvasScale.x-=0.01;
+  }
+  //shrink y to fit
+  while(minHeight*canvasScale.y > c.height){
+    canvasScale.y-=0.01;
+  }
+  console.log(canvasScale.x);
+  canvasScale.font = canvasScale.x < canvasScale.y ? canvasScale.x : canvasScale.y;
+  console.log(canvasScale.font);
+  // original build-widht scaling should be replaced by canvasScale driven shrinkage
+  // c.height = c.height < minHeight ? minHeight : c.height;
+  // c.width = c.width < minWidth ? minWidth : c.width;
 }
 
 //go through the depthmap to draw
@@ -241,11 +259,12 @@ var intelliDraw = function(canvasToolTarget, depthArray, depth){
   var xoffset = c.width / (depthArray.length+1);
   // console.log(xoffset);
   for(var i=0; i<depthArray.length; i++){
-    yPost = childOffset.y*depth;
+    yPost = childOffset.y*depth*canvasScale.y;
     if(depthArray.length==1){
-      xPost = xoffset;
+      xPost = xoffset*canvasScale.x;
     }else{
       xPost=xoffset*(i+1)-xoffset/2;
+      xPost = xPost*canvasScale.x;
     }
     drawDetailedBox(canvasToolTarget, xPost, yPost, depthArray[i].title);
     var node = depthArray[i];
@@ -287,7 +306,7 @@ var populateChildren = function(data){
     }
   }
   // console.log(depthMap);
-  if(typeof depthMap[0] == "undefined") depthMap[0] = [{"title": "home", "description": "default home page", "depth": 0}];
+  if(typeof depthMap[0] == "undefined") depthMap[0] = [{"title": "home", "body": "default home page", "depth": 0}];
   return data;
 }
 
@@ -340,9 +359,8 @@ var rebalanceRow = function(depthMap, depth){
 //************
 //magic for overlay modal type thing
 //***********
-function overlay() {
-	el = document.getElementById("overlay");
-	el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
+var toggleModal = function() {
+  $('.modal').modal('toggle');
 }
 
 
@@ -364,49 +382,49 @@ var drawBox = function(target, x, y){
   var c = document.getElementById(target);
   var ctx = c.getContext('2d');
   ctx.fillStyle="#dddddd";
-  ctx.fillRect(x,y,defaultBox.width,defaultBox.height);
+  ctx.fillRect(x,y,defaultBox.width*canvasScale.x,defaultBox.height*canvasScale.y);
 }
 //draw text at a location
-var drawText = function(target, x, y){
-  var c = document.getElementById(target);
-  var ctx = c.getContext('2d');
-  ctx.font = "20px Arial";
-  ctx.fillStyle="#000000";
-  ctx.fillText("Hello canvas", 10, 50);
-}
+// var drawText = function(target, x, y, text){
+//   var c = document.getElementById(target);
+//   var ctx = c.getContext('2d');
+//   ctx.font = "20px Arial";
+//   ctx.fillStyle="#000000";
+//   ctx.fillText(text, 10, 50);
+// }
 //draw a label in top left corner
 var drawLabel = function(target, labelText){
   var c = document.getElementById(target);
   var ctx = c.getContext('2d');
-  var fontsize = 30;
+  var fontsize = 30*canvasScale.font;
   ctx.font = fontsize.toString()+"px Arial";
   ctx.fillStyle="#ff0000";
   ctx.fillText(labelText, 10, fontsize);
 }
 //draw an appropriately positioned title for the object-box located at x,y
 var drawTitle=function(target, x, y, title){
-  var fontHeight = 20;
+  var fontHeight = 20*canvasScale.font;
   var c = document.getElementById(target);
   var ctx = c.getContext('2d');
   ctx.font=fontHeight.toString()+"px Arial";
   ctx.fillStyle="#000000";
-  ctx.fillText(title, x+defaultBox.width/2, y+fontHeight);
+  ctx.fillText(title, x+defaultBox.width/8*canvasScale.x, y+fontHeight*canvasScale.y);
 }
 //draw a smaller box in the top right corner of the parent box at x,y
-var cornerBox=function(target, x, y){
-  x = x + defaultBox.width - 30;
-  var c = document.getElementById(target);
-  var ctx = c.getContext('2d');
-  ctx.fillStyle="#cccccc";
-  ctx.fillRect(x,y,30,20);
-}
+// var cornerBox=function(target, x, y){
+//   x = x + defaultBox.width - 30;
+//   var c = document.getElementById(target);
+//   var ctx = c.getContext('2d');
+//   ctx.fillStyle="#cccccc";
+//   ctx.fillRect(x,y,30,20);
+// }
 var drawStroke=function(target, x1, y1, x2, y2){
   //console.log(target);
   var c = document.getElementById(target);
   var ctx = c.getContext('2d');
   ctx.beginPath();
-  ctx.moveTo(x1+defaultBox.width/2, y1+defaultBox.height/2);
-  ctx.lineTo(x2+defaultBox.width/2, y2+defaultBox.height/2);
+  ctx.moveTo(x1+defaultBox.width/2*canvasScale.x, y1+defaultBox.height/2*canvasScale.y);
+  ctx.lineTo(x2+defaultBox.width/2*canvasScale.x, y2+defaultBox.height/2*canvasScale.y);
   ctx.strokeStyle="black";
   ctx.stroke();
 }
