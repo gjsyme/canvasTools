@@ -8,6 +8,8 @@ Right now this is minimal function, scale, etc. Right now you can 'host' by open
 - Scale the image in a meaningful way to the number of nodes in the tree
   - definitely will require vertical scale
   - maybe horizontal (this gets crazier faster due to the normality of vertical scrolling in our web-life)
+  - tweak scaling to really make sense in the space available
+  - consider an outline to better define the boxes
 - Establish interactivity of the visualization
   - have to create children and rebalance the depth of the child dynamically to draw them each in the right spot
   - starting to look more and more like this will require a CSS to go with, but trying to avoid (ref: canary yellow 'modal')
@@ -16,4 +18,5 @@ Right now this is minimal function, scale, etc. Right now you can 'host' by open
     - your mileage may vary, of course
 - Set up a server with this repo for the purpose of having Mongo + Web Server that will simulate the normal operational relationship
 - Add a save button by which to update the existing nodes through the 'modal'
+- prioritize putting items under / near their parents and without crazy line crossing in the depthmap or at least drawing
 - TBD

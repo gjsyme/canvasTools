@@ -70,7 +70,7 @@ var clickReporter = function(event){
   // console.log("clicked at: ("+x+", "+y+")");
   var selected = findBox(x, y);
   console.log(selected);
-  updateBox(selected);
+  if(selected) updateBox(selected);
 }
 
 //keep track of what is associated with the node box
@@ -78,16 +78,14 @@ var updateBox = function(selectedNode){
   if(selectedNode){
     document.getElementById('node-title').value = selectedNode.title;
     document.getElementById('node-body').value = selectedNode.body;
+    document.getElementById('node-depth').value = selectedNode.depth;
     document.getElementById('node-parent').value = selectedNode.parent;
     // document.getElementById('node-depth').value = selectedNode.depth;
-    // document.getElementById('div-hider').hidden="";
-    // document.getElementById('node-create-child').addEventListener('click', addChildNode);
     toggleModal();
   } else {
     document.getElementById('node-title').value = '';
     document.getElementById('node-body').value = '';
-    // document.getElementById('div-hider').hidden="hidden";
-    // document.getElementById('node-create-child').removeEventListener('click', addChildNode);
+    document.getElementById('node-depth').value = '';
     toggleModal();
   }
 }
@@ -194,16 +192,17 @@ var updateCanvasParameters = function(canvasToolTarget){
     if(depthMap[key].length > totalWidth){totalWidth = depthMap[key].length;}
   }
 
-  var minHeight = childOffset.y*totalDepth + 100*canvasScale.y;
-  var minWidth = childOffset.x*totalWidth + 100*canvasScale.x;
+  var minHeight = (childOffset.y*totalDepth + 100);//*canvasScale.y;
+  var minWidth = (childOffset.x*totalWidth + 100);//*canvasScale.x;
   //shrink x to fit
   while(minWidth*canvasScale.x > c.width){
+    console.log(minWidth*canvasScale.x +': '+c.width);
     canvasScale.x-=0.01;
   }
   //shrink y to fit
-  while(minHeight*canvasScale.y > c.height){
-    canvasScale.y-=0.01;
-  }
+  // while(minHeight*canvasScale.y > c.height){
+  //   canvasScale.y-=0.01;
+  // }
   console.log(canvasScale.x);
   canvasScale.font = canvasScale.x < canvasScale.y ? canvasScale.x : canvasScale.y;
   console.log(canvasScale.font);
@@ -360,6 +359,13 @@ var rebalanceRow = function(depthMap, depth){
 //magic for overlay modal type thing
 //***********
 var toggleModal = function() {
+  if($('#myModal').hasClass('in')){
+    document.getElementById('saveNode').removeEventListener('click', saveNode);
+    document.getElementById('addChild').removeEventListener('click', addChildNode);
+  }else{
+    document.getElementById('saveNode').addEventListener('click', saveNode);
+    document.getElementById('addChild').addEventListener('click', addChildNode);
+  }
   $('.modal').modal('toggle');
 }
 
