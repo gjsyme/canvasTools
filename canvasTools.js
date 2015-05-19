@@ -20,15 +20,6 @@ var canvasToolTarget;
 //***********************TEST DATA SETUP************
 //testdata in a really roundabout way because my brain prefers it.
 var testData = [
-  // {title: 'root', description: 'the root node', parent: ''},
-  // {title: "one", description: "this is the one thing", parent: 'root'},
-  // {title: 'two', description: 'this is the other thing', parent: 'root'},
-  // {title: 'a', description: 'this is a', parent: 'one'},
-  // {title: 'b', description: 'this is b', parent: 'one'},
-  // {title: 'c', description: 'this is c', parent: 'one'},
-  // {title: 'x', description: 'this is x', parent: 'two'},
-  // {title: 'y', description: 'this is y', parent: 'two'},
-  // {title: 'z', description: 'this is z', parent: 'two'}
   { "_id" : "gC5mxB6iCzLvSbtHW", "name" : "I would like to eat", "target" : "/content", "parent" : "home", "category" : "food", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Food", "body" : "There are many competitive options for satisfying your caloric requirements. While eastern cuisine is delicious, you may find it short lived in providing satiety; conversely, western fare has been known to become monotonous and potentially less-than-healthy in the Standard American Diet (SAD). As a compromise, Mediterranean dishes are often a great selection." },
   { "_id" : "qhpreMZYqchraJiji", "name" : "I would like to watch a movie", "target" : "/content", "parent" : "home", "category" : "movies", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Movies", "body" : "Movies are divided up into various genres, which are listed below. Based upon what type of movie experience you are looking for, we can help you find exactly what you're looking for." },
   { "_id" : "wfHz8tBjKyNmK4kmH", "name" : "I would like to read a book", "target" : "/content", "parent" : "home", "category" : "books", "user" : "ZFsAL9ZnvL5nEfvHi", "title" : "Reading", "body" : "There are many different things to consider when selecting reading material. To start, please select a category from below:" },
@@ -62,17 +53,12 @@ var arrayToMap = function(array){
   return ret;
 }
 var testMap = arrayToMap(testData);
-//console.log(testMap);
+// console.log(testMap);
 //*************************************************
 //will have to address how this is to be handled with a real datasource
 
-//full sample object out of MongoDB
-//{ "_id" : "mMY3vZ6kc6K786shT", "name" : "IdeaLab", "target" : "/content", "parent" : "home", "category" : "idealab", "user" : "Wzh6JMb7LcppDtwBN", "title" : "IdeaLab", "body" : "Use our 3d printer, 3d scanner, software development studio, and other exciting technical resources!" }
-
 //determine what exactly is going on with a click that has been recorded by the listenere
 var clickReporter = function(event){
-  // console.log(event);
-  //have to ensure that i have an up to date offset for the scroll and for the canvas at the time that the click happens.
   updateOffsets(event.target.getAttribute("id"));
   var x = event.x - canvasOffsets.x;
   var y = event.y - canvasOffsets.y;
@@ -90,26 +76,33 @@ var updateBox = function(selectedNode){
     document.getElementById('node-depth').value = selectedNode.depth;
     document.getElementById('div-hider').hidden="";
     document.getElementById('node-create-child').addEventListener('click', addChildNode);
+    overlay();
   } else {
     document.getElementById('node-title').value = '';
     document.getElementById('node-description').value = '';
     document.getElementById('div-hider').hidden="hidden";
     document.getElementById('node-create-child').removeEventListener('click', addChildNode);
+    overlay();
   }
 }
 
-//create and save the new child node based upon parent node found in addChildeNode
+//create and save the new child node based upon parent node found in addChildNode
 var createChildNode = function(node){
   var childNode = {};
   childNode.title = 'child of '+node.title;
   childNode.description = 'this is the child of '+node.title;
   childNode.parent = node.title;
   childNode.depth = node.depth+1;
-  //depthMap[childNode.depth].push
-  testData.push(childNode);
-  console.log(testData);
-  testMap = arrayToMap(testData);
+  if(Object.keys(depthMap).indexOf(childNode.depth) > 0){
+    depthMap[childNode.depth].push;
+  }else{
+    depthMap[childNode.depth] = [childNode];
+  }
+  // testData.push(childNode);
+  // console.log(testData);
+  // testMap = arrayToMap(testData);
   clearCanvas(canvasToolTarget);
+  rebalanceRow(depthMap, childNode.depth);
   drawData(canvasToolTarget);
 }
 //handles the click, finds the current node, calls for the creation of the new node
@@ -178,9 +171,9 @@ var drawDataSet = function(canvasToolTarget, data){
   drawLabel(canvasToolTarget, "Demo Label");
   //create a children field for each item in the map based on the parent field
   data = populateChildren(data);
-  console.log(data);
+  // console.log(data);
   updateCanvasParameters(canvasToolTarget);
-  console.log('param update');
+  // console.log('param update');
   drawTree(canvasToolTarget, data);
 }
 
@@ -226,11 +219,15 @@ var drawLinks = function(canvasToolTarget){
 }
 
 var findParent = function(childNode){
+  // console.log('finding parent for '+childNode.title+' at depth '+childNode.depth);
   if(child.depth ==0) return false;
   var parentDepth = child.depth -1;
   for(var key in depthMap[parentDepth]){
     //console.log(depthMap[parentDepth][key].title);
     if(depthMap[parentDepth][key].title == childNode.parent){
+      return depthMap[parentDepth][key];
+    }
+    if(depthMap[parentDepth][key].category == childNode.parent){
       return depthMap[parentDepth][key];
     }
   }
@@ -257,7 +254,6 @@ var intelliDraw = function(canvasToolTarget, depthArray, depth){
     // console.log(node);
     saveToDepthArray(node);
   }
-  //console.log(depthMap);
 }
 
 var saveToDepthArray = function(node){
@@ -275,8 +271,8 @@ var saveToDepthArray = function(node){
   depthMap[node.depth] = tempArray;
 }
 
+//this function populates depthMap, effectively your source of node truth from this point forward
 var populateChildren = function(data){
-  //go to each node, find depth of that node
   //populate the depthMap with depth: [node1, node2, node...] for tracking purposes
   //experimentally, also adding the depth data to the initial data (return the modified data to the caller)
   for(var key in data){
@@ -298,19 +294,13 @@ var populateChildren = function(data){
 var lengthToRoot = function(data, key, depth){
   // console.log('lengthToRoot: '+key);
   //console.log(data[key]);
-  if(key=="home") return depth+1;
+  if(key=="home") return depth;
   if(data[key]){
     if(data[key].parent==="home"){
       return depth+1;
     }else{
       var fetchedNode = fetchNodeByTitle(data, key);
-      //console.log('not a child of root - digging up');
-      //console.log(data[key].parent);
       if(fetchedNode){
-        // console.log('fetched node');
-        // var fetchNode = fetchNodeByTitle(data, key);
-        // console.log(fetchedNode);
-        //console.log(fetchNodeByTitle(data, key));
         return lengthToRoot(data, fetchedNode.parent, depth+1);
       }else{
         return lengthToRoot(data, data[key].parent, depth+1);
@@ -320,8 +310,6 @@ var lengthToRoot = function(data, key, depth){
   }else{
     var fetchNode = fetchNodeByTitle(data, key);
     if(fetchNode){
-      // console.log('fetched node in alt path');
-      // console.log(fetchNode);
       return lengthToRoot(data, fetchNode.parent, depth+1);
     }else{
       return lengthToRoot(data, data[key].parent, depth+1);
@@ -333,24 +321,28 @@ var lengthToRoot = function(data, key, depth){
 var fetchNodeByTitle = function(nodeMap, cat){
   // console.log('checking by key: '+cat);
   var tempNode = nodeMap[cat];
-  // console.log(tempNode);
   if(typeof tempNode == 'undefined'){
-  //   console.log('undefined');
     for(key in nodeMap){
       if(nodeMap[key].category == cat) tempNode = nodeMap[key];
     }
-    // console.log('updated tempNode to '+tempNode.title);
   }
   return tempNode;
-  // for(key in nodeMap){
-  //   if(nodeMap[key].category == tempNode.parent){
-  //     console.log('found target');
-  //     console.log(nodeMap[key]);
-  //     return nodeMap[key];
-  //   }
-  // }
-  // console.log('i have failed you');
   return false;
+}
+
+var rebalanceRow = function(depthMap, depth){
+  var balanceArray = depthMap[depth];
+  console.log(balanceArray);
+  //have to now recalculate x for each of the nodes in the array; this should be called after adding a new child
+}
+
+
+//************
+//magic for overlay modal type thing
+//***********
+function overlay() {
+	el = document.getElementById("overlay");
+	el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
 }
 
 
