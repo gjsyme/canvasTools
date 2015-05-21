@@ -111,6 +111,7 @@ var createChildNode = function(node){
 }
 //handles the click, finds the current node, calls for the creation of the new node
 var addChildNode = function(event){
+  if($('#myModal').hasClass('in')){ toggleModal();}
   //do stuff here
   var depth = document.getElementById('node-depth').value;
   var title = document.getElementById('node-title').value;
@@ -126,6 +127,53 @@ var addChildNode = function(event){
   }
   console.log(node);
   createChildNode(node);
+}
+
+var saveNode = function(event){
+  //do stuff to save the node updates based on values of the inputs
+  var title = document.getElementById('node-title').value;
+  var body = document.getElementById('node-body').value;
+  var parent = document.getElementById('node-parent').value;
+  var depth = document.getElementById('node-depth').value;
+
+  var homeArray = depthMap[depth];
+  //crudely find the target Node
+  var node;
+  for(var key in homeArray){
+    if(homeArray[key].title==title){
+      node = homeArray[key];
+      break;
+    }
+  }
+  if(node.title != title) node.title = title;
+  if(node.body != body) node.body = body;
+  if(node.parent == parent){
+    //keep the same parent -> keep the same depth -> easy save
+    depthMap[depth][key] = node;
+  }else{ //node.parent != parent
+    // console.log('updating parent');
+    node.parent = parent;
+    //find the new parent
+    for(var depthKey in depthMap){
+      // console.log('examining '+depthKey+' in depthMap');
+      for(var key in depthMap[depthKey]){
+        //console.log(depthMap[depthKey][key].category+' : '+parent);
+        if(depthMap[depthKey][key].category == parent){
+          //found match, change the parent and depth record
+          // console.log('match on '+depthMap[depthKey][key].category+' == '+parent);
+          //console.log(node.depth);
+          node.depth = depthMap[depthKey][key].depth+1;
+          //console.log(node.depth);
+          depthMap[node.depth].push(node);
+          break;
+        }
+      }
+    }
+  }
+  //ensure that things are redrawn before returning.
+  console.log(depthMap);
+  drawData(canvasToolTarget);
+  toggleModal();
 }
 
 //ensure that the click is registring to the right spot on the canvas
@@ -185,30 +233,33 @@ var updateCanvasParameters = function(canvasToolTarget){
   var c = document.getElementById(canvasToolTarget);
   var ctx = c.getContext('2d');
 
+  console.log("window width: "+window.innerWidth);
+
   var totalDepth = Object.keys(depthMap).length;
   var totalWidth=0;
   for(var key in depthMap){
     // console.log(depthMap[key].length);
     if(depthMap[key].length > totalWidth){totalWidth = depthMap[key].length;}
   }
+  console.log(totalWidth);
+
+  canvasScale.x = 1; canvasScale.y =1;
 
   var minHeight = (childOffset.y*totalDepth + 100);//*canvasScale.y;
   var minWidth = (childOffset.x*totalWidth + 100);//*canvasScale.x;
+  console.log(minWidth);
   //shrink x to fit
+  if(minWidth > c.width && minWidth > (window.innerWidth-30)) c.width = window.innerWidth-30;
   while(minWidth*canvasScale.x > c.width){
-    console.log(minWidth*canvasScale.x +': '+c.width);
     canvasScale.x-=0.01;
   }
-  //shrink y to fit
+  // probably won't shrink on Y axis due to normalcy of vertical scroll (vice horizontal which is awkward)
+  // shrink y to fit
   // while(minHeight*canvasScale.y > c.height){
   //   canvasScale.y-=0.01;
   // }
   console.log(canvasScale.x);
   canvasScale.font = canvasScale.x < canvasScale.y ? canvasScale.x : canvasScale.y;
-  console.log(canvasScale.font);
-  // original build-widht scaling should be replaced by canvasScale driven shrinkage
-  // c.height = c.height < minHeight ? minHeight : c.height;
-  // c.width = c.width < minWidth ? minWidth : c.width;
 }
 
 //go through the depthmap to draw
@@ -260,10 +311,9 @@ var intelliDraw = function(canvasToolTarget, depthArray, depth){
   for(var i=0; i<depthArray.length; i++){
     yPost = childOffset.y*depth*canvasScale.y;
     if(depthArray.length==1){
-      xPost = xoffset*canvasScale.x;
+      xPost = xoffset;//*canvasScale.x;
     }else{
-      xPost=xoffset*(i+1)-xoffset/2;
-      xPost = xPost*canvasScale.x;
+      xPost=xoffset*(i+1)-xoffset*canvasScale.x;
     }
     drawDetailedBox(canvasToolTarget, xPost, yPost, depthArray[i].title);
     var node = depthArray[i];
@@ -281,7 +331,6 @@ var saveToDepthArray = function(node){
   // console.log(tempArray);
   for(var i=0; i<tempArray.length; i++){
     if(node.title == tempArray[i].title){
-      //do stuff
       // console.log('match');
       tempArray[i] = node;
     }
@@ -292,7 +341,7 @@ var saveToDepthArray = function(node){
 //this function populates depthMap, effectively your source of node truth from this point forward
 var populateChildren = function(data){
   //populate the depthMap with depth: [node1, node2, node...] for tracking purposes
-  //experimentally, also adding the depth data to the initial data (return the modified data to the caller)
+  //also adds the depth data to the initial data (return the modified data to the caller)
   for(var key in data){
     // console.log('populating '+key);
     var depth = lengthToRoot(data, key, 0);
@@ -304,14 +353,14 @@ var populateChildren = function(data){
       depthMap[depth] = [data[key]];
     }
   }
-  // console.log(depthMap);
+  // create default root node for those that don't manually add a root node - this may be how all instances from the dynamicResource app occur
+  // and that is likely how any app (decision tree) happens due to the static home page utilized
   if(typeof depthMap[0] == "undefined") depthMap[0] = [{"title": "home", "body": "default home page", "depth": 0}];
   return data;
 }
 
+//this pretty much is 100% - in that it works in all tests i've done
 var lengthToRoot = function(data, key, depth){
-  // console.log('lengthToRoot: '+key);
-  //console.log(data[key]);
   if(key=="home") return depth;
   if(data[key]){
     if(data[key].parent==="home"){
@@ -337,7 +386,6 @@ var lengthToRoot = function(data, key, depth){
 
 //search by key that will yield the node that is the parent of the node with that key
 var fetchNodeByTitle = function(nodeMap, cat){
-  // console.log('checking by key: '+cat);
   var tempNode = nodeMap[cat];
   if(typeof tempNode == 'undefined'){
     for(key in nodeMap){
@@ -348,6 +396,7 @@ var fetchNodeByTitle = function(nodeMap, cat){
   return false;
 }
 
+//major TODO here
 var rebalanceRow = function(depthMap, depth){
   var balanceArray = depthMap[depth];
   console.log(balanceArray);
@@ -390,7 +439,8 @@ var drawBox = function(target, x, y){
   ctx.fillStyle="#dddddd";
   ctx.fillRect(x,y,defaultBox.width*canvasScale.x,defaultBox.height*canvasScale.y);
 }
-//draw text at a location
+// NOT USED
+// draw text at a location
 // var drawText = function(target, x, y, text){
 //   var c = document.getElementById(target);
 //   var ctx = c.getContext('2d');
@@ -416,7 +466,8 @@ var drawTitle=function(target, x, y, title){
   ctx.fillStyle="#000000";
   ctx.fillText(title, x+defaultBox.width/8*canvasScale.x, y+fontHeight*canvasScale.y);
 }
-//draw a smaller box in the top right corner of the parent box at x,y
+// NOT USED
+// draw a smaller box in the top right corner of the parent box at x,y
 // var cornerBox=function(target, x, y){
 //   x = x + defaultBox.width - 30;
 //   var c = document.getElementById(target);
