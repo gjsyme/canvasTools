@@ -95,21 +95,22 @@ var createChildNode = function(node){
   var childNode = {};
   childNode.title = 'child of '+node.title;
   childNode.body = 'this is the child of '+node.title;
-  childNode.parent = node.title;
+  childNode.parent = node.category;
   childNode.depth = node.depth+1;
-  if(Object.keys(depthMap).indexOf(childNode.depth) > 0){
-    depthMap[childNode.depth].push;
+  console.log('pushing new node to depth: '+childNode.depth);
+  //console.log(depthMap[childNode.depth]);
+  if(typeof depthMap[childNode.depth] != 'undefined'){
+    console.log('adding to existing depth');
+    depthMap[childNode.depth].push(childNode);
   }else{
+    console.log('new depth');
     depthMap[childNode.depth] = [childNode];
   }
-  // testData.push(childNode);
-  // console.log(testData);
-  // testMap = arrayToMap(testData);
   clearCanvas(canvasToolTarget);
-  rebalanceRow(depthMap, childNode.depth);
-  drawData(canvasToolTarget);
+  //drawData(canvasToolTarget);
+  drawTree(canvasToolTarget);
 }
-//handles the click, finds the current node, calls for the creation of the new node
+//handles the button event, finds the current node, calls for the creation of the new node
 var addChildNode = function(event){
   if($('#myModal').hasClass('in')){ toggleModal();}
   //do stuff here
@@ -119,13 +120,13 @@ var addChildNode = function(event){
   var node;
   //populate the node
   for(var key in depthMap[depth]){
-    console.log('key: '+key+ ' looking for '+title);
+    //console.log('key: '+key+ ' looking for '+title);
     if(depthMap[depth][key].title==title){
       node = depthMap[depth][key];
       break;
     }
   }
-  console.log(node);
+  //console.log(node);
   createChildNode(node);
 }
 
@@ -384,7 +385,7 @@ var lengthToRoot = function(data, key, depth){
   }
 }
 
-//search by key that will yield the node that is the parent of the node with that key
+//description got away from me, but meets the need for the lengthToRoot function
 var fetchNodeByTitle = function(nodeMap, cat){
   var tempNode = nodeMap[cat];
   if(typeof tempNode == 'undefined'){
@@ -396,12 +397,12 @@ var fetchNodeByTitle = function(nodeMap, cat){
   return false;
 }
 
-//major TODO here
-var rebalanceRow = function(depthMap, depth){
-  var balanceArray = depthMap[depth];
-  console.log(balanceArray);
-  //have to now recalculate x for each of the nodes in the array; this should be called after adding a new child
-}
+//major TODO here - or maybe not - not quite sure if needed based upon performance of the save function
+// var rebalanceRow = function(depthMap, depth){
+//   var balanceArray = depthMap[depth];
+//   console.log(balanceArray);
+//   //have to now recalculate x for each of the nodes in the array; this should be called after adding a new child
+// }
 
 
 //************
